@@ -76,6 +76,26 @@ def enregistrer_client():
     conn.commit()
     conn.close()
     return redirect('/consultation/')  # Rediriger vers la page d'accueil après l'enregistrement
-                                                                                                                                       
+
+@app.route('/fiche_nom/', methods=['GET', 'POST'])
+def recherche_par_nom():
+    if request.method == 'POST':
+        nom_recherche = request.form['nom']
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        # Recherche par nom
+        cursor.execute('SELECT * FROM clients WHERE nom LIKE ?', ('%' + nom_recherche + '%',))
+        data = cursor.fetchall()
+
+        conn.close()
+
+        # Rendre le template HTML avec les résultats
+        return render_template('resultat_recherche.html', data=data, nom=nom_recherche)
+
+    # Si méthode GET, afficher le formulaire de recherche
+    return render_template('formulaire_recherche.html')
+
 if __name__ == "__main__":
   app.run(debug=True)
