@@ -77,28 +77,24 @@ def enregistrer_client():
     conn.close()
     return redirect('/consultation/')  # Rediriger vers la page d'accueil après l'enregistrement
 
-@app.route('/fiche_nom', methods=['GET', 'POST'])
-def recherche_par_nom():
+@app.route('/add_book', methods=['GET', 'POST'])
+def add_book():
     if request.method == 'POST':
-        # Récupérer le nom saisi dans le formulaire
-        nom_recherche = request.form.get('nom')
+        title = request.form['title']
+        author = request.form['author']
+        genre = request.form['genre']
+        stock = int(request.form['stock'])
 
-        # Connexion à la base de données
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
-
-        # Requête pour chercher les clients par nom
-        cursor.execute('SELECT * FROM clients WHERE nom LIKE ?', ('%' + nom_recherche + '%',))
-        data = cursor.fetchall()
-
+        cursor.execute('INSERT INTO books (title, author, genre, stock) VALUES (?, ?, ?, ?)',
+                       (title, author, genre, stock))
+        conn.commit()
         conn.close()
 
-        # Afficher les résultats dans un template
-        return render_template('resultat_recherche.html', data=data, nom=nom_recherche)
+        return redirect('/books')
 
-    # Si méthode GET, afficher simplement le formulaire
-    return render_template('formulaire_recherche.html')
-
+    return render_template('add_book.html')
 
 if __name__ == "__main__":
   app.run(debug=True)
