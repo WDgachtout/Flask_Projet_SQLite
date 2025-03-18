@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Liste des Livres</title>
+</head>
+<body>
+  <h1>Liste des Livres</h1>
+  <ul>
+      {% for book in books %}
+          <li>{{ book[1] }} par {{ book[2] }} (Stock : {{ book[4] }}) 
+              {% if book[4] > 0 %}
+                  <form method="POST" action="/borrow/{{ book[0] }}">
+                      <button type="submit">Emprunter</button>
+                  </form>
+              {% else %}
+                  Non disponible
+              {% endif %}
+          </li>
+      {% endfor %}
+  </ul>
+</body>
+</html>
