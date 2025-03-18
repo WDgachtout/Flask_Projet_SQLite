@@ -97,5 +97,6 @@ def recherche_par_nom():
     # Si méthode GET, afficher le formulaire de recherche
     return render_template('formulaire_recherche.html')
 
+
 if __name__ == "__main__":
   app.run(debug=True)
