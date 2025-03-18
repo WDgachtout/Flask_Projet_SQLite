@@ -42,23 +42,33 @@ def authentification():
         username = request.form['username']
         password = request.form['password']
 
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT id, role FROM users WHERE username = ? AND password = ?', (username, password))
-        user = cursor.fetchone()
-        conn.close()
+        try:
+            # Connexion à la base de données
+            conn = sqlite3.connect('database.db')
+            cursor = conn.cursor()
 
-        if user:
-            session['authentifie'] = True
-            session['user_id'] = user[0]
-            session['role'] = user[1]
+            # Vérifier si l'utilisateur existe
+            cursor.execute('SELECT id, role FROM users WHERE username = ? AND password = ?', (username, password))
+            user = cursor.fetchone()
+            conn.close()
 
-            return redirect(url_for('lecture'))
-        
-        else:
-            return render_template('formulaire_authentification.html', error=True)
+            if user:
+                # Stocker les informations utilisateur dans la session
+                session['authentifie'] = True
+                session['user_id'] = user[0]
+                session['role'] = user[1]
+
+                return redirect(url_for('lecture'))
+            else:
+                # Identifiants incorrects
+                return render_template('formulaire_authentification.html', error="Nom d'utilisateur ou mot de passe incorrect")
+
+        except Exception as e:
+            # Gestion des erreurs SQL ou autres exceptions
+            return f"Une erreur est survenue : {e}", 500
 
     return render_template('formulaire_authentification.html', error=False)
+
 
 
 @app.route('/fiche_client/<int:post_id>')
