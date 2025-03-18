@@ -80,21 +80,23 @@ def enregistrer_client():
 @app.route('/fiche_nom', methods=['GET', 'POST'])
 def recherche_par_nom():
     if request.method == 'POST':
-        nom_recherche = request.form['nom']
+        # Récupérer le nom saisi dans le formulaire
+        nom_recherche = request.form.get('nom')
 
+        # Connexion à la base de données
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
-        # Recherche par nom
+        # Requête pour chercher les clients par nom
         cursor.execute('SELECT * FROM clients WHERE nom LIKE ?', ('%' + nom_recherche + '%',))
         data = cursor.fetchall()
 
         conn.close()
 
-        # Rendre le template HTML avec les résultats
+        # Afficher les résultats dans un template
         return render_template('resultat_recherche.html', data=data, nom=nom_recherche)
 
-    # Si méthode GET, afficher le formulaire de recherche
+    # Si méthode GET, afficher simplement le formulaire
     return render_template('formulaire_recherche.html')
 
 
