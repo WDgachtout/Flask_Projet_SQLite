@@ -77,7 +77,7 @@ def enregistrer_client():
     conn.close()
     return redirect('/consultation/')  # Rediriger vers la page d'accueil après l'enregistrement
 
-@app.route('/fiche', methods=['GET', 'POST'])
+@app.route('/fiche_nom', methods=['GET', 'POST'])
 def recherche_par_nom():
     if request.method == 'POST':
         # Récupérer le nom saisi dans le formulaire
