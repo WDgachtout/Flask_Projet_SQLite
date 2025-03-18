@@ -15,6 +15,17 @@ def est_authentifie():
 @app.route('/')
 def hello_world():
     return render_template('hello.html')
+
+def est_admin():
+    return session.get('role') == 'admin'
+
+@app.route('/admin_only')
+def admin_only():
+    if not est_admin():
+        return "Accès refusé : Administrateurs uniquement", 403
+
+    return "Bienvenue, administrateur !"
+
  
 @app.route('/lecture')
 def lecture():
@@ -28,16 +39,27 @@ def lecture():
 @app.route('/authentification', methods=['GET', 'POST'])
 def authentification():
     if request.method == 'POST':
-        # Vérifier les identifiants
-        if request.form['username'] == 'admin' and request.form['password'] == 'password': # password à cacher par la suite
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, role FROM users WHERE username = ? AND password = ?', (username, password))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
             session['authentifie'] = True
-            # Rediriger vers la route lecture après une authentification réussie
+            session['user_id'] = user[0]
+            session['role'] = user[1]
+
             return redirect(url_for('lecture'))
+        
         else:
-            # Afficher un message d'erreur si les identifiants sont incorrects
             return render_template('formulaire_authentification.html', error=True)
 
     return render_template('formulaire_authentification.html', error=False)
+
 
 @app.route('/fiche_client/<int:post_id>')
 def Readfiche(post_id):
@@ -95,6 +117,40 @@ def add_book():
         return redirect('/books')
 
     return render_template('add_book.html')
+
+@app.route('/books')
+def list_books():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM books')
+    books = cursor.fetchall()
+    conn.close()
+
+    return render_template('list_books.html', books=books)
+@app.route('/borrow/<int:book_id>', methods=['POST'])
+def borrow_book(book_id):
+    if not est_authentifie():
+        return redirect(url_for('authentification'))
+
+    user_id = session.get('user_id')
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    # Vérifier si le livre est disponible
+    cursor.execute('SELECT stock FROM books WHERE id = ?', (book_id,))
+    book = cursor.fetchone()
+    
+    if book and book[0] > 0:
+        # Insérer l'emprunt et mettre à jour le stock
+        cursor.execute('INSERT INTO borrows (user_id, book_id) VALUES (?, ?)', (user_id, book_id))
+        cursor.execute('UPDATE books SET stock = stock - 1 WHERE id = ?', (book_id,))
+        conn.commit()
+
+    conn.close()
+    
+    return redirect('/books')
+
 
 if __name__ == "__main__":
   app.run(debug=True)
