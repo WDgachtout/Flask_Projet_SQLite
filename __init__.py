@@ -112,15 +112,15 @@ def enregistrer_client():
 @app.route('/add_book', methods=['GET', 'POST'])
 def add_book():
     if request.method == 'POST':
-        title = request.form['title']
-        author = request.form['author']
-        genre = request.form['genre']
-        stock = int(request.form['stock'])
+        titre = request.form['title']
+        auteur = request.form['author']
+        annee_publication = int(request.form['year'])
+        quantite = int(request.form['stock'])
 
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect('database2.db')
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO books (title, author, genre, stock) VALUES (?, ?, ?, ?)',
-                       (title, author, genre, stock))
+        cursor.execute('INSERT INTO Livres (ID_livre, Titre, Auteur, Annee_publication, Quantite) VALUES (NULL, ?, ?, ?, ?)',
+                       (titre, auteur, annee_publication, quantite))
         conn.commit()
         conn.close()
 
@@ -130,13 +130,14 @@ def add_book():
 
 @app.route('/books')
 def list_books():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database2.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM books')
+    cursor.execute('SELECT * FROM Livres WHERE Quantite > 0')
     books = cursor.fetchall()
     conn.close()
 
     return render_template('list_books.html', books=books)
+ 
 @app.route('/borrow/<int:book_id>', methods=['POST'])
 def borrow_book(book_id):
     if not est_authentifie():
@@ -144,23 +145,39 @@ def borrow_book(book_id):
 
     user_id = session.get('user_id')
 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database2.db')
     cursor = conn.cursor()
 
     # Vérifier si le livre est disponible
-    cursor.execute('SELECT stock FROM books WHERE id = ?', (book_id,))
+    cursor.execute('SELECT Quantite FROM Livres WHERE ID_livre = ?', (book_id,))
     book = cursor.fetchone()
-    
+
     if book and book[0] > 0:
         # Insérer l'emprunt et mettre à jour le stock
-        cursor.execute('INSERT INTO borrows (user_id, book_id) VALUES (?, ?)', (user_id, book_id))
-        cursor.execute('UPDATE books SET stock = stock - 1 WHERE id = ?', (book_id,))
+        cursor.execute('INSERT INTO Emprunts (ID_utilisateur, ID_livre, Date_emprunt) VALUES (?, ?, DATE("now"))', 
+                       (user_id, book_id))
+        cursor.execute('UPDATE Livres SET Quantite = Quantite - 1 WHERE ID_livre = ?', (book_id,))
         conn.commit()
 
     conn.close()
-    
-    return redirect('/books')
 
+    return redirect('/books')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes emprunts</title>
+</head>
+<body>
+    <h1>Mes emprunts</h1>
+    <ul>
+        {% for borrow in borrows %}
+            <li>{{ borrow[1] }} par {{ borrow[2] }} (Date d'emprunt : {{ borrow[3] }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
 
 if __name__ == "__main__":
   app.run(debug=True)
