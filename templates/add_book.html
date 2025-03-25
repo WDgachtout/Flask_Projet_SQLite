@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Ajouter un Livre</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un livre</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <h1>Ajouter un Livre</h1>
-  <form method="POST" action="/add_book">
-      <label for="title">Titre :</label>
-      <input type="text" name="title" required><br>
-      <label for="author">Auteur :</label>
-      <input type="text" name="author" required><br>
-      <label for="genre">Genre :</label>
-      <input type="text" name="genre"><br>
-      <label for="stock">Stock :</label>
-      <input type="number" name="stock" required><br>
-      <button type="submit">Ajouter</button>
-  </form>
+    <h1>Ajouter un nouveau livre</h1>
+    <form method="post">
+        <input type="text" name="title" placeholder="Titre du livre" required>
+        <input type="text" name="author" placeholder="Auteur du livre" required>
+        <input type="number" name="year" placeholder="Année de publication" required>
+        <input type="number" name="stock" placeholder="Quantité disponible" required>
+        <button type="submit">Ajouter</button>
+    </form>
 </body>
 </html>
