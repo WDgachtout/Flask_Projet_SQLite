@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes emprunts</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Mes emprunts</h1>
+    <ul>
+        {% for borrow in borrows %}
+            <li>{{ borrow[1] }} par {{ borrow[2] }} (Date d'emprunt : {{ borrow[3] }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
