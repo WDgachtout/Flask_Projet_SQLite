@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Liste des Livres</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des livres</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <h1>Liste des Livres</h1>
-  <ul>
-      {% for book in books %}
-          <li>{{ book[1] }} par {{ book[2] }} (Stock : {{ book[4] }}) 
-              {% if book[4] > 0 %}
-                  <form method="POST" action="/borrow/{{ book[0] }}">
-                      <button type="submit">Emprunter</button>
-                  </form>
-              {% else %}
-                  Non disponible
-              {% endif %}
-          </li>
-      {% endfor %}
-  </ul>
+    <h1>Liste des livres disponibles</h1>
+    <ul>
+        {% for book in books %}
+            <li>{{ book[1] }} par {{ book[2] }} (Quantité : {{ book[4] }})
+                <form action="/borrow/{{ book[0] }}" method="post">
+                    <button type="submit">Emprunter</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
