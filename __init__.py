@@ -1,7 +1,4 @@
-from flask import Flask, render_template_string, render_template, jsonify, request, redirect, url_for, session
-from flask import json
-from urllib.request import urlopen
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 
 app = Flask(__name__)
@@ -13,7 +10,7 @@ def est_authentifie():
 
 @app.route('/')
 def hello_world():
-    return render_template('index.html')  # Modification : page d'accueil vers index.html
+    return render_template('hello.html')  # Page d'accueil existante
 
 # Fonction pour vérifier si l'utilisateur est administrateur
 def est_admin():
@@ -23,7 +20,6 @@ def est_admin():
 def admin_only():
     if not est_admin():
         return "Accès refusé : Administrateurs uniquement", 403
-
     return "Bienvenue, administrateur !"
 
 @app.route('/lecture')
@@ -31,8 +27,6 @@ def lecture():
     if not est_authentifie():
         # Rediriger vers la page d'authentification si l'utilisateur n'est pas authentifié
         return redirect(url_for('authentification'))
-
-    # Si l'utilisateur est authentifié
     return "<h2>Bravo, vous êtes authentifié</h2>"
 
 @app.route('/authentification', methods=['GET', 'POST'])
@@ -56,12 +50,10 @@ def authentification():
                 session['authentifie'] = True
                 session['user_id'] = user[0]
                 session['role'] = user[1]
-
                 return redirect(url_for('lecture'))
             else:
                 # Identifiants incorrects
                 return render_template('formulaire_authentification.html', error="Nom d'utilisateur ou mot de passe incorrect")
-
         except Exception as e:
             # Gestion des erreurs SQL ou autres exceptions
             return f"Une erreur est survenue : {e}", 500
@@ -92,7 +84,7 @@ def add_task():
             'is_completed': False
         }
         
-        # Ajouter la tâche à la session
+        # Ajouter la tâche à la liste en session
         tasks = session['tasks']
         tasks.append(task)
         session['tasks'] = tasks
