@@ -13,7 +13,7 @@ def est_authentifie():
 
 @app.route('/')
 def hello_world():
-    return render_template('hello.html')
+    return render_template('index.html')  # Modification : page d'accueil vers index.html
 
 # Fonction pour vérifier si l'utilisateur est administrateur
 def est_admin():
@@ -68,93 +68,64 @@ def authentification():
 
     return render_template('formulaire_authentification.html', error=False)
 
-@app.route('/add_book', methods=['GET', 'POST'])
-def add_book():
+# Gestionnaire de tâches collaboratif
+
+# Initialisation des tâches en session
+@app.before_request
+def init_session():
+    if 'tasks' not in session:
+        session['tasks'] = []
+
+# Ajouter une tâche
+@app.route('/add_task', methods=['GET', 'POST'])
+def add_task():
     if request.method == 'POST':
-        titre = request.form['title']
-        auteur = request.form['author']
-        annee_publication = int(request.form['year'])
-        quantite = int(request.form['stock'])
+        title = request.form['title']
+        description = request.form['description']
+        due_date = request.form['due_date']
+        
+        # Créer une tâche sous forme de dictionnaire
+        task = {
+            'title': title,
+            'description': description,
+            'due_date': due_date,
+            'is_completed': False
+        }
+        
+        # Ajouter la tâche à la session
+        tasks = session['tasks']
+        tasks.append(task)
+        session['tasks'] = tasks
+        
+        return redirect(url_for('list_tasks'))
+    
+    return render_template('add_task.html')
 
-        try:
-            conn = sqlite3.connect('database2.db')
-            cursor = conn.cursor()
-            cursor.execute('INSERT INTO Livres (ID_livre, Titre, Auteur, Annee_publication, Quantite) VALUES (NULL, ?, ?, ?, ?)',
-                           (titre, auteur, annee_publication, quantite))
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            return f"Erreur lors de l'ajout du livre : {e}", 500
+# Afficher les tâches
+@app.route('/tasks')
+def list_tasks():
+    tasks = session.get('tasks', [])
+    return render_template('list_tasks.html', tasks=tasks)
 
-        return redirect('/books')
+# Marquer une tâche comme terminée
+@app.route('/complete_task/<int:task_id>')
+def complete_task(task_id):
+    tasks = session.get('tasks', [])
+    if 0 <= task_id < len(tasks):
+        tasks[task_id]['is_completed'] = True
+        session['tasks'] = tasks
+    
+    return redirect(url_for('list_tasks'))
 
-    return render_template('add_book.html')
-
-@app.route('/books')
-def list_books():
-    try:
-        conn = sqlite3.connect('database2.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM Livres WHERE Quantite > 0')
-        books = cursor.fetchall()
-        conn.close()
-    except Exception as e:
-        return f"Erreur lors de la récupération des livres : {e}", 500
-
-    return render_template('list_books.html', books=books)
-
-@app.route('/borrow/<int:book_id>', methods=['POST'])
-def borrow_book(book_id):
-    if not est_authentifie():
-        return redirect(url_for('authentification'))
-
-    user_id = session.get('user_id')
-
-    try:
-        conn = sqlite3.connect('database2.db')
-        cursor = conn.cursor()
-
-        # Vérifier si le livre est disponible
-        cursor.execute('SELECT Quantite FROM Livres WHERE ID_livre = ?', (book_id,))
-        book = cursor.fetchone()
-
-        if book and book[0] > 0:
-            # Insérer l'emprunt et mettre à jour le stock
-            cursor.execute('INSERT INTO Emprunts (ID_utilisateur, ID_livre, Date_emprunt) VALUES (?, ?, DATE("now"))',
-                           (user_id, book_id))
-            cursor.execute('UPDATE Livres SET Quantite = Quantite - 1 WHERE ID_livre = ?', (book_id,))
-            conn.commit()
-        else:
-            return "Livre non disponible", 400
-
-        conn.close()
-    except Exception as e:
-        return f"Erreur lors de l'emprunt : {e}", 500
-
-    return redirect('/books')
-
-@app.route('/my_borrows')
-def my_borrows():
-    if not est_authentifie():
-        return redirect(url_for('authentification'))
-
-    user_id = session.get('user_id')
-
-    try:
-        conn = sqlite3.connect('database2.db')
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT Emprunts.ID_emprunt, Livres.Titre, Livres.Auteur, Emprunts.Date_emprunt 
-            FROM Emprunts 
-            JOIN Livres ON Emprunts.ID_livre = Livres.ID_livre 
-            WHERE Emprunts.ID_utilisateur = ?
-        """, (user_id,))
-        borrows = cursor.fetchall()
-        conn.close()
-    except Exception as e:
-        return f"Erreur lors de la récupération des emprunts : {e}", 500
-
-    return render_template('my_borrows.html', borrows=borrows)
+# Supprimer une tâche
+@app.route('/delete_task/<int:task_id>')
+def delete_task(task_id):
+    tasks = session.get('tasks', [])
+    if 0 <= task_id < len(tasks):
+        tasks.pop(task_id)
+        session['tasks'] = tasks
+    
+    return redirect(url_for('list_tasks'))
 
 if __name__ == "__main__":
     app.run(debug=True)
